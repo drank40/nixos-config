@@ -103,7 +103,6 @@
     jetbrains-mono
     noto-fonts
     noto-fonts-color-emoji
-    nerd-fonts.hack
   ];
 
   # Enable man pages

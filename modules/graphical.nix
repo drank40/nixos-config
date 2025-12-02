@@ -5,8 +5,6 @@
 {
   # X11 / Display server
   services.xserver = {
-    enable = true;
-    
     # Keyboard
     xkb = {
       layout = "it";
@@ -29,7 +27,7 @@
           rev = "2fe254e"; 
           sha256 = "sha256-F1CMhRdOGz0+0qT8YCdMMz+7s08F/mgiOrwIJMJQIbc="; 
        };
-       buildInputs = old.buildInputs : ++ [ 
+       buildInputs = old.buildInputs ++ [ 
          pkgs.xorg.libXinerama
 	 pkgs.xorg.libXinerama.dev
        ];

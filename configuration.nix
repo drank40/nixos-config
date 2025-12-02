@@ -98,7 +98,6 @@ in
   };
 
   # Bluetooth (conditional)
-  hardware.bluetooth.enable = enableBluetooth;
   services.blueman.enable = enableBluetooth;
 
   # Audio
