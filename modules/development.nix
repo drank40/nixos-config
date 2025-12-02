@@ -18,6 +18,7 @@
     llvm
     lld
     ccache
+    ctags
     cmake
     ninja
     meson

@@ -17,6 +17,7 @@
     htop
     btop
     fastfetch
+    killall
 
     # Archives
     zip

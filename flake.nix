@@ -42,7 +42,7 @@
   in {
     nixosConfigurations = {
       # Desktop / workstation
-      archon = nixpkgs.lib.nixosSystem {
+      nsa-router = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit inputs unstable; };
         modules = [

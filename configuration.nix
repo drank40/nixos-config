@@ -1,12 +1,8 @@
 # /etc/nixos/configuration.nix
 { config, lib, pkgs, ... }:
 
-let
-  # Toggle these per machine
-  enableGUI = true;        # false for headless servers (Hetzner)
-  enableBluetooth = true;  # false for servers
-  hostname = "nsa-router";     # change per machine
-  username = "renny";       # your username
+let 
+  vars = import ./vars.nix;
 in
 {
   imports = [
@@ -15,7 +11,8 @@ in
     ./modules/security-tools.nix
     ./modules/blockchain.nix
     ./modules/development.nix
-  ] ++ lib.optionals enableGUI [
+    ./vars.nix
+  ] ++ lib.optionals vars.enableGUI [
     ./modules/graphical.nix
   ];
 
@@ -27,7 +24,7 @@ in
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Hostname
-  networking.hostName = hostname;
+  networking.hostName = vars.hostname;
 
   # Networking
   networking.networkmanager.enable = true;
@@ -43,9 +40,10 @@ in
   time.timeZone = "Europe/Rome";  # adjust
   services.timesyncd.enable = true;
   i18n.defaultLocale = "en_US.UTF-8";
+  console.keyMap = "it";
 
   # User account
-  users.users.${username} = {
+  users.users.${vars.username} = {
     isNormalUser = true;
     extraGroups = [ 
       "wheel" 
@@ -59,7 +57,7 @@ in
       "tty"
     ];
     shell = pkgs.zsh;
-    # openssh.authorizedKeys.keys = [ "ssh-ed25519 AAAA..." ];  # for remote
+    openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDJckU1t8cST9dh+tVoQT5SzahGOKjzmPzL4gtZHE3QQsWBtpV34ic7UMKnUal9Apiltw5eAe3N/5oqy5uT3yB9UhAMETLdh2eKes9dFhDi5FCwAriqPcpCSyOYp1AXMwA1Ok/zvpeFnJYc6sizV/rq8TLr4HATI0r5XWWQdO8HM+aXLh/+d64UnQFLrzmcpGhnKvxBl96F8nfRpsTM+UMt0zGExS9PNIkVKcCXX+7/SfmHE4vOUmD7X4Vn5NqggpBobI5a2Omi1N/dPFUBxBkHk/wZKxt4PXzYtldrW0pBpd0nroUraumqxPAtjAegyVUhNCN3XkdVj2L/cuYxfrwibOJG18djDa1X8HPq5o8y8QZhY7ZbT4nQv9D2h3WnHeunkkP3GqlDaGV3/f9e65C1AqwzTwMD09zRqOfvNx6emT1bRiHwo7GQ6enQq3tqbMJ7/NpnJJ4bHam++RaaP6AL5mnqnKWYVNyhDlw1k9y3vSob0G5dyE4FeXYduLD0PZk=" ];  # for remote
   };
 
   # Enable nix-ld for running unpatched binaries (Binary Ninja, etc.)
@@ -98,7 +96,7 @@ in
   };
 
   # Bluetooth (conditional)
-  services.blueman.enable = enableBluetooth;
+  services.blueman.enable = vars.enableBluetooth;
 
   # Audio
   services.pipewire = {
@@ -157,3 +155,4 @@ in
 
   system.stateVersion = "24.11";  # Don't change after install
 }
+
