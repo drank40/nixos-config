@@ -38,11 +38,11 @@
       inherit system;
       config.allowUnfree = true;
     };
-    
+    vars = import ./vars.nix;
   in {
     nixosConfigurations = {
       # Desktop / workstation
-      nsa-router = nixpkgs.lib.nixosSystem {
+      ${vars.hostname} = nixpkgs.lib.nixosSystem {
         inherit system;
         specialArgs = { inherit inputs unstable; };
         modules = [
@@ -55,12 +55,16 @@
           { nixpkgs.overlays = [ fenix.overlays.default ]; }
           
           # Home manager (optional)
-          # home-manager.nixosModules.home-manager
-          # {
-          #   home-manager.useGlobalPkgs = true;
-          #   home-manager.useUserPackages = true;
-          #   home-manager.users.YOUR_USERNAME = import ./home.nix;
-          # }
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+	    home-manager.users.${vars.username} = {
+	      home.stateVersion = "24.11";
+	      home.username = vars.username;
+  	      home.homeDirectory = "/home/${vars.username}";
+	    };
+          }
         ];
       };
       

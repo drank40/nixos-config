@@ -11,6 +11,8 @@
     
     # === Debuggers ===
     gdb
+    pwndbg
+    rr
     
     capstone
     keystone
@@ -23,6 +25,7 @@
     tcpdump
     netcat-openbsd
     socat
+    aircrack-ng
     
     curl
     

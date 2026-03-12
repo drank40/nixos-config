@@ -1,11 +1,47 @@
 # /etc/nixos/modules/base.nix
 # Core system packages and configuration
-{ config, lib, pkgs, ... }:
+{ config, lib, pkgs, unstable, ... }:
 
 {
   environment.systemPackages = with pkgs; [
     # Core utils
+    amdvlk
+    pkgs.pkgsi686Linux.amdvlk
+    xreader
+    unstable.networkmanagerapplet
+    pkgs.glib
+    pkgs.zlib
+    pkgs.libGL
+    pkgs.fontconfig
+    pkgs.xorg.libX11
+    pkgs.libxkbcommon
+    pkgs.freetype
+    pkgs.dbus
+    ncmpcpp
+    mpdris2
+    
+    gnuplot
+    mesa.drivers
+    libvdpau-va-gl
+    vaapiVdpau
+    libglvnd
+    vulkan-loader
+    vulkan-tools
+    hcloud
+    mermaid-cli
+    ueberzugpp
+    imagemagick
+    luajitPackages.magick
+    google-fonts
+    parallel
+    just
+    typst
+    direnv
     coreutils
+    bash
+    proot
+    rlwrap
+    mlocate
     findutils
     diffutils
     gnused
@@ -16,8 +52,28 @@
     tree
     htop
     btop
+    hashcash
     fastfetch
     killall
+    screen
+    pwntools
+    burpsuite
+    mullvad-vpn
+    xz
+    pkg-config
+    coc-clangd
+    zig
+    
+
+    
+    android-tools
+
+    (python3.withPackages (ps: with ps; [
+      pwntools
+      requests
+    ]))
+
+    delta
 
     # Archives
     zip
@@ -103,6 +159,7 @@
     fira-code-symbols
     jetbrains-mono
     noto-fonts
+    unstable.font-awesome
     noto-fonts-color-emoji
   ];
 

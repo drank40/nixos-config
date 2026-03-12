@@ -18,7 +18,7 @@
     llvm
     lld
     ccache
-    ctags
+    universal-ctags
     cmake
     ninja
     meson

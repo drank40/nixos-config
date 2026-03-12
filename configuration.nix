@@ -3,6 +3,21 @@
 
 let 
   vars = import ./vars.nix;
+  linux_6_8 = (pkgs.linuxManualConfig {
+      version = "6.8.12";
+      modDirVersion = "6.8.12";
+
+      src = pkgs.fetchurl {
+        url = "https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.8.12.tar.xz";
+        sha256 = "sha256-GbMZVtIptbnKVnH6HHQyAXloKj2NAPyGeUEUsh2oYDk=";
+      };
+
+      configfile = pkgs.linuxPackages_latest.kernel.configfile;
+      allowImportFromDerivation = true;
+    }).overrideAttrs (old: { meta = old.meta // { broken = false; }; });
+
+    linuxPackages_6_8 = pkgs.linuxPackagesFor linux_6_8;
+
 in
 {
   imports = [
@@ -11,7 +26,6 @@ in
     ./modules/security-tools.nix
     ./modules/blockchain.nix
     ./modules/development.nix
-    ./vars.nix
   ] ++ lib.optionals vars.enableGUI [
     ./modules/graphical.nix
   ];
@@ -26,6 +40,27 @@ in
   # Hostname
   networking.hostName = vars.hostname;
 
+
+  networking.firewall.extraCommands = ''
+    iptables -I INPUT -i virbr0 -s 192.168.122.0/24 -j ACCEPT
+  '';
+
+  boot.kernelModules = [ "kvm-amd" "typec_displayport" ];
+
+  #networking.extraHosts = ''
+  #  127.0.0.1 ifconfig.me
+  #  127.0.0.1 api.ipify.org
+  # 127.0.0.1 icanhazip.com
+  #'';
+
+  networking.extraHosts = ''
+    127.0.0.1 x.com
+    127.0.0.1 youtube.com
+    127.0.0.1 youtu.be
+    127.0.0.1 youtube.googleapis.com
+  '';
+
+
   # Networking
   networking.networkmanager.enable = true;
 
@@ -39,6 +74,33 @@ in
   # Timezone & locale
   time.timeZone = "Europe/Rome";  # adjust
   services.timesyncd.enable = true;
+
+  services.mpd = {
+    enable = true;
+    musicDirectory = "/home/${vars.username}/Music";
+    user = vars.username;
+    extraConfig = ''
+      audio_output {
+        type "pulse"
+        name "PipeWire (via PulseAudio)"
+      }
+    '';
+  };
+
+  systemd.services.mpd.environment = {
+    XDG_RUNTIME_DIR = "/run/user/1000";
+  };
+
+  systemd.user.services.mpDris2 = {
+    description = "MPRIS2 bridge for MPD";
+    after = [ "mpd.service" ];
+    wantedBy = [ "default.target" ];
+    serviceConfig.ExecStart = "${pkgs.mpdris2}/bin/mpDris2";
+  };
+
+
+
+  services.resolved.enable = true; 
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "it";
 
@@ -46,6 +108,7 @@ in
   users.users.${vars.username} = {
     isNormalUser = true;
     extraGroups = [ 
+      "plugdev"
       "wheel" 
       "networkmanager" 
       "docker" 
@@ -55,6 +118,7 @@ in
       "video"
       "input"
       "tty"
+      "dialout"
     ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [ "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDJckU1t8cST9dh+tVoQT5SzahGOKjzmPzL4gtZHE3QQsWBtpV34ic7UMKnUal9Apiltw5eAe3N/5oqy5uT3yB9UhAMETLdh2eKes9dFhDi5FCwAriqPcpCSyOYp1AXMwA1Ok/zvpeFnJYc6sizV/rq8TLr4HATI0r5XWWQdO8HM+aXLh/+d64UnQFLrzmcpGhnKvxBl96F8nfRpsTM+UMt0zGExS9PNIkVKcCXX+7/SfmHE4vOUmD7X4Vn5NqggpBobI5a2Omi1N/dPFUBxBkHk/wZKxt4PXzYtldrW0pBpd0nroUraumqxPAtjAegyVUhNCN3XkdVj2L/cuYxfrwibOJG18djDa1X8HPq5o8y8QZhY7ZbT4nQv9D2h3WnHeunkkP3GqlDaGV3/f9e65C1AqwzTwMD09zRqOfvNx6emT1bRiHwo7GQ6enQq3tqbMJ7/NpnJJ4bHam++RaaP6AL5mnqnKWYVNyhDlw1k9y3vSob0G5dyE4FeXYduLD0PZk=" ];  # for remote
@@ -64,6 +128,9 @@ in
   programs.nix-ld = {
     enable = true;
     libraries = with pkgs; [
+      linuxHeaders
+      linuxPackages_latest.kernel.dev
+
       stdenv.cc.cc
       zlib
       openssl
@@ -92,11 +159,67 @@ in
       alsa-lib
       pango
       cairo
+      gh
+      glibc
     ];
   };
 
   # Bluetooth (conditional)
   services.blueman.enable = vars.enableBluetooth;
+
+  services.logind = {
+    lidSwitch = "ignore";
+  };
+
+  services.udev.extraRules = ''
+     ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1001", MODE="0666", GROUP="plugdev"
+     ATTRS{idVendor}=="303a", ATTRS{idProduct}=="1002", MODE="0666"
+     SUBSYSTEM=="usb", ATTR{idVendor}=="0403", ATTR{idProduct}=="6014", MODE="0666", GROUP="users"
+     ACTION=="add", SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
+     SUBSYSTEM=="backlight", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness"
+     SUBSYSTEM=="backlight", KERNEL=="amdgpu_bl1", RUN+="${pkgs.coreutils}/bin/chgrp video /sys/class/backlight/%k/brightness", RUN+="${pkgs.coreutils}/bin/chmod g+w /sys/class/backlight/%k/brightness"
+  '';
+
+  hardware.bluetooth = {
+    enable = vars.enableBluetooth;
+    powerOnBoot = true;
+    settings = {
+      General = {
+        ControllerMode = "dual";
+      };
+      GATT = {
+        ExchangeMTU = 517;
+      };
+      Policy = {
+        AutoEnable = true;
+      };
+    };
+  };
+   
+  hardware.acpilight.enable = true;
+  hardware.graphics.enable = true;
+  hardware.graphics.enable32Bit = true;
+
+
+
+  virtualisation.libvirtd.enable = true;
+
+  virtualisation.libvirtd.qemu = {
+    package = pkgs.qemu_kvm;
+    swtpm.enable = true;
+    ovmf = {
+      enable = true;
+      packages = [
+        (pkgs.OVMF.override {
+          secureBoot = true;
+          fdSize4MB = true;
+        }).fd
+      ];
+    };
+    vhostUserPackages = [ pkgs.virtiofsd ];
+  };
+
+  programs.virt-manager.enable = true;
 
   # Audio
   services.pipewire = {
@@ -112,13 +235,7 @@ in
     enableOnBoot = true;
   };
 
-  # Libvirt/QEMU for VMs
-  virtualisation.libvirtd = {
-    enable = true;
-    qemu = {
-      package = pkgs.qemu_kvm;
-    };
-  };
+  virtualisation.podman.enable = true;
 
   # SSH
   services.openssh = {
@@ -136,6 +253,20 @@ in
     syntaxHighlighting.enable = true;
     autosuggestions.enable = true;
   };
+ 
+
+  environment.systemPackages = with pkgs; [
+    zlib
+    zlib.dev  # Add the dev headers
+    distrobox
+  ];
+  
+specialisation.kernel-6_8.configuration = {
+  boot.kernelPackages =  lib.mkForce linuxPackages_6_8;
+  hardware.graphics.enable32Bit = lib.mkForce false;
+};
+
+
 
   # Nix settings
   nix = {
