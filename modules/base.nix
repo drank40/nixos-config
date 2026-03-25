@@ -6,6 +6,13 @@
   environment.systemPackages = with pkgs; [
     # Core utils
     amdvlk
+    gdu
+    libseccomp
+    gh
+    jdk21
+    maven
+    unstable.rocksdb
+    tmux
     pkgs.pkgsi686Linux.amdvlk
     xreader
     unstable.networkmanagerapplet
@@ -71,6 +78,14 @@
     (python3.withPackages (ps: with ps; [
       pwntools
       requests
+      ipython
+      pytest
+      black
+      pynvim
+      docker
+      z3-solver
+      pip 
+      virtualenv
     ]))
 
     delta
@@ -133,11 +148,6 @@
     llvm
     binutils
 
-    # Python base
-    python3
-    python3Packages.pip
-    python3Packages.virtualenv
-
     # Node base
     nodejs
     yarn
@@ -154,9 +164,11 @@
   # Fonts
   fonts.packages = with pkgs; [
     dejavu_fonts
+    iosevka
     liberation_ttf
     fira-code
     fira-code-symbols
+    (nerdfonts.override { fonts = [ "NerdFontsSymbolsOnly" ]; })
     jetbrains-mono
     noto-fonts
     unstable.font-awesome

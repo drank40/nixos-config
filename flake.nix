@@ -63,6 +63,15 @@
 	      home.stateVersion = "24.11";
 	      home.username = vars.username;
   	      home.homeDirectory = "/home/${vars.username}";
+
+
+          home.file.".config/clangd/config.yaml".text = ''
+            CompileFlags:
+                Add:
+                    - -isystem${pkgs.glibc.dev}/include
+                    - -isystem${pkgs.gcc-unwrapped}/lib/gcc/${pkgs.stdenv.hostPlatform.config}/${pkgs.gcc-unwrapped.version}/include
+                    - -isystem${pkgs.gcc-unwrapped}/lib/gcc/${pkgs.stdenv.hostPlatform.config}/${pkgs.gcc-unwrapped.version}/include-fixed
+          '';
 	    };
           }
         ];

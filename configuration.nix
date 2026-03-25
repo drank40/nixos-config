@@ -34,18 +34,38 @@ in
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+
+  # goodies
+  programs.direnv.nix-direnv.enable = true;
+
   # Kernel (latest for hardware support, or hardened for security)
   boot.kernelPackages = pkgs.linuxPackages_latest;
 
   # Hostname
   networking.hostName = vars.hostname;
 
+  zramSwap = {
+    enable = true;
+    memoryPercent = 30;  # use up to 50% of RAM
+  };
+
+
 
   networking.firewall.extraCommands = ''
     iptables -I INPUT -i virbr0 -s 192.168.122.0/24 -j ACCEPT
   '';
 
-  boot.kernelModules = [ "kvm-amd" "typec_displayport" ];
+  boot.extraModulePackages = [
+    (config.boot.kernelPackages.v4l2loopback.overrideAttrs (old: {
+      postPatch = (old.postPatch or "") + ''
+        sed -i 's/del_timer_sync/timer_delete_sync/g' v4l2loopback.c
+      '';
+    }))
+  ];
+
+  boot.kernelModules = [ "kvm-amd" "typec_displayport" "v4l2loopback" ];
+
+
 
   #networking.extraHosts = ''
   #  127.0.0.1 ifconfig.me
@@ -58,6 +78,7 @@ in
     127.0.0.1 youtube.com
     127.0.0.1 youtu.be
     127.0.0.1 youtube.googleapis.com
+    95.174.28.35 ctfchall.com
   '';
 
 
@@ -91,18 +112,13 @@ in
     XDG_RUNTIME_DIR = "/run/user/1000";
   };
 
-  systemd.user.services.mpDris2 = {
-    description = "MPRIS2 bridge for MPD";
-    after = [ "mpd.service" ];
-    wantedBy = [ "default.target" ];
-    serviceConfig.ExecStart = "${pkgs.mpdris2}/bin/mpDris2";
-  };
-
-
+  systemd.user.services.mpDris2.wantedBy = [ "default.target" ];
 
   services.resolved.enable = true; 
   i18n.defaultLocale = "en_US.UTF-8";
   console.keyMap = "it";
+
+  services.mullvad-vpn.enable = true;
 
   # User account
   users.users.${vars.username} = {

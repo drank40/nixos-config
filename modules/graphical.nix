@@ -76,7 +76,7 @@ in
     XCURSOR_SIZE = 24;
     XCURSOR_THEME = "Adwaita";
     GDK_SCALE = "1";
-    GDK_DPI_SCALE = "1.2";
+    GDK_DPI_SCALE = "1";
     QT_AUTO_SCREEN_SCALE_FACTOR = "1";
   };
 
@@ -106,8 +106,8 @@ in
       st = prev.st.overrideAttrs (old: {
         src = pkgs.fetchgit {
       	  url = "https://github.com/drank40/st";
-          rev = "ebcc214";
-          sha256 = "sha256-tfLSgkcFNnETIeMeT7RGgR3utJjdb4EJabHxVgBgI6k=";
+          rev = "2045474";
+          sha256 = "sha256-/04jlTezS/xgiSQ42T0fd+HcCFxwT8cas1Of0F0BWEc=";
         };
 
 	#env vars
@@ -191,7 +191,6 @@ in
     libreoffice
     
     # sec  
-    ghidra
     wireshark
 
 
@@ -218,6 +217,7 @@ in
     pcmanfm
     blender
     freecad
+    portaudio
     mumble
     sxiv
     arandr
